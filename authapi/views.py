@@ -8,12 +8,10 @@ import json
 # Create your views here.
 def index(request):
     if request.method == 'POST':
-        body_unicode = request.body
-       
-        content = body_unicode['name']
+        content = request.POST
         uploadedfile = request.FILES['face']
         fs = FileSystemStorage()
         savedfile = fs.save(uploadedfile.name,uploadedfile)
         
-        print(content)
+        print(content['name'])
     return HttpResponse("Hello, world. You're at the polls index.")
