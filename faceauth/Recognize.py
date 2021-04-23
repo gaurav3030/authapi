@@ -1,8 +1,9 @@
-import cv2
+
 import os
 import sys
 import argparse as arg
 import numpy as np
+import cv2
 from face_detect import *
 class Recognizer():
     def __init__(self,cascadePath,train_file,lbph_var):

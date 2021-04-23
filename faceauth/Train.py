@@ -30,6 +30,15 @@ class Train_Model():
 		print ("\n# Person ID = " + str(ID))
 		Info.close()
 		return ID
+	def user_add(self,Name):
+		
+		Info = open("users_name.txt", "a+")
+		ID = len(open("users_name.txt").readlines(  )) + 1
+		Info.write(str(ID) + "," + Name + "\n")
+		print ("\n# Person ID = " + str(ID))
+		Info.close()
+		return ID
+
 	def getImagesAndLabels(self,path):
 		imagePaths = [os.path.join(path,f) for f in os.listdir (path)]
 		faceSamples = []
@@ -45,6 +54,7 @@ class Train_Model():
 		print ( "\n# Training" )
 		time.sleep(1)
 		faces, ids = self.getImagesAndLabels (path)
+		print(ids)
 		self.recognizer.update (faces, np.array (ids))
 		self.recognizer.write (file_name)
 		print ( "\n# {0} people trained successfully.".format (len (np.unique (ids))))
@@ -144,6 +154,95 @@ class Train_Model():
 		cam.release ()
 		cv2.destroyAllWindows ()
 		plt.show()
+
+
+	def dataset_create(self,samples,cam,dataset_name,username):
+		fig, axs = plt.subplots(10,5, figsize=(20,20), facecolor='w', edgecolor='k')
+		fig.subplots_adjust(hspace = .5, wspace=.001)
+		#Names = self.FileRead()                               
+		#print(Names)
+		self.path_exists(dataset_name)
+		count = 0
+		face_id = self.user_add(username)
+		print("\n#Creating dataset")
+		print ( "\n# Initializing camera")
+		while (True):
+			# Capture, decode and return the next frame of the video
+			ret, image = cam.read()	
+			#Convert to gray-scale image
+			gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+			#gray = cv2.equalizeHist(gray)
+			faces = self._Face_Cascade.detectMultiScale(gray,scaleFactor = 1.098, minNeighbors = 6, minSize = (50, 50))
+			if (len(faces) > 1):
+				print("\n# Multiple faces detected")
+				continue
+			try :
+				for _,face in enumerate(faces):
+					
+					x, y, w, h = face
+					gray_chunk = gray[y-30: y + h + 30, x-30: x + w + 30]
+					image_chunk = image[y: y + h, x: x + w]
+					Right_Eye = self._Right_Eye_Cascade.detectMultiScale (gray[y: y + int (h / 2), x: x + int (w / 2)],
+						scaleFactor = 1.05, minNeighbors = 6, minSize = (10, 10))
+					if len(Right_Eye) > 1:
+						print("\n# Right Eye is not detected !!!")
+						raise Exception
+					for _,eye1 in enumerate(Right_Eye):
+						rx, ry, rw, rh = eye1
+						Left_Eye = self._Left_Eye_Cascade.detectMultiScale (gray [y: y + int (h / 2), x + int (w / 2): x +w],
+							scaleFactor = 1.05, minNeighbors = 6, minSize = (10, 10))
+						if len(Left_Eye) > 1:
+							print("\n# Left Eye is not detected !!!")
+							raise Exception
+						for _,eye2 in enumerate(Left_Eye):
+							lx, ly, lw, lh =  eye2
+							eyeXdis = (lx + w / 2 + lw / 2) - (rx + rw / 2)
+							eyeYdis = (ly + lh / 2) - (ry + rh / 2)
+							angle_rad = np.arctan (eyeYdis / eyeXdis)
+							angle_degree = angle_rad * 180 / np.pi
+							#print("[INFO] Rotation angle : {:.2f} degree".format(angle_degree))
+							self.Draw_Rect(image, face,[0,255,0])
+							cv2.rectangle (image_chunk, (rx, ry), (rx + rw, ry + rh), (255,255,255), 2)
+							cv2.rectangle (image_chunk, (lx + int (w / 2), ly), (lx + int (w / 2) + lw, ly + lh), (0,255, 255), 2)
+							cv2.imshow('Video', image)	
+							image_center = tuple(np.array(gray_chunk.shape) / 2)
+							rot_mat = cv2.getRotationMatrix2D(image_center, angle_degree, 1.0)
+							rotated_image = cv2.warpAffine(gray_chunk, rot_mat, gray_chunk.shape, flags=cv2.INTER_LINEAR)
+							print("\n# Adding image number {} to dataset".format(count))
+							cv2.imwrite("dataset2/Person." + str(face_id) + '.' + str(count) + ".jpg " ,
+								rotated_image)
+							axs[int(count/5)][count%5].imshow(rotated_image,cmap='gray', vmin=0, vmax=255)
+							axs[int(count/5)][count%5].set_title("Person." + str(face_id) + '.' + str(count) + ".jpg ", 
+								fontdict={'fontsize': 15,'fontweight': 'medium'})
+							axs[int(count/5)][count%5].axis('off')
+							'''
+							count += 1
+							cv2.imwrite("dataset/Person." + str(face_id) + '.' + str(count) + ".jpg " ,
+								image_chunk)
+							#self.Draw_Rect(rotated_image, face)
+							axs[int(count/5)][count%5].imshow(gray_chunk,cmap='gray', vmin=0, vmax=255)
+							axs[int(count/5)][count%5].set_title("Person." + str(face_id) + '.' + str(count) + ".jpg ", 
+								fontdict={'fontsize': 15,'fontweight': 'medium'})
+							axs[int(count/5)][count%5].axis('off')
+							'''
+							#print("[{},{}]".format(int(count/5),count%5))
+							count += 1
+							#cv2.imshow('Rotated to save', rotated_image)
+					
+			except Exception as e:
+				print(e)
+				print("# ERROR")
+				continue
+			if cv2.waitKey (1) & 0xff == 27:
+				break
+			elif count >= samples: 
+				break
+		print("\n# Dataset created")
+		cam.release ()
+		cv2.destroyAllWindows ()
+		plt.show()
+
+
 def Arg_Parse():
 	Arg_Par = arg.ArgumentParser()
 	Arg_Par.add_argument("-v", "--video",
@@ -152,6 +251,35 @@ def Arg_Parse():
 					help = "Id of the camera")
 	arg_list = vars(Arg_Par.parse_args())
 	return arg_list
+
+def trainface_v(videopath,username):
+	face_cascade = 'faceauth\Haar_Cascades\haarcascade_frontalface_default.xml'
+	right_eye_cascade = 'faceauth\Haar_Cascades\haarcascade_righteye_2splits.xml'
+	left_eye_cascade = 'faceauth\Haar_Cascades\haarcascade_lefteye_2splits.xml'
+	if not (os.path.isfile(face_cascade)):
+		raise RuntimeError("%s: not found" % face_cascade)
+	if not (os.path.isfile(right_eye_cascade)):
+		raise RuntimeError("%s: not found" % right_eye_cascade)
+	if not (os.path.isfile(left_eye_cascade)):
+		raise RuntimeError("%s: not found" % left_eye_cascade)
+	samples = 50
+	dataset_name = 'dataset2\\'
+	file_name = 'train.yaml'
+	radius = 1
+	neighbour = 8
+	grid_x = 8
+	grid_y = 8
+	var = list([radius,neighbour,grid_x,grid_y])
+	model = Train_Model(face_cascade,right_eye_cascade,left_eye_cascade,var)
+	video = cv2.VideoCapture(videopath)
+	print(video.get(3))
+	print(video.get(4))
+	model.dataset_create(samples,video,dataset_name,username)
+	model.train(dataset_name,file_name)
+	return True
+
+
+
 if __name__ == "__main__":
 	if len(sys.argv) == 1:
 		print("# Provide an argument")
