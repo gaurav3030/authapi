@@ -6,7 +6,7 @@ import argparse as arg
 import time
 import cv2
 import numpy as np
-from skin_seg import *
+from faceauth.skin_seg import *
 class Face_Detector():
 	def __init__(self,skin_detect):
 		"skin_detect is an object from skin_seg file"

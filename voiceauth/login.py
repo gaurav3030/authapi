@@ -5,6 +5,8 @@ import random
 from test_speaker import check_speaker
 import os
 
+
+
 name = input("Enter your Name: ")
 
 FORMAT = pyaudio.paInt16
@@ -38,7 +40,7 @@ stream.close()
 audio.terminate()
 
 OUTPUT_FILENAME="test_" + name + "_1.wav"
-WAVE_OUTPUT_FILENAME=os.path.join("dataset_test",OUTPUT_FILENAME)
+WAVE_OUTPUT_FILENAME=os.path.join("dataset_test\\",OUTPUT_FILENAME)
 
 trainedfilelist = open("testing_file.txt", 'a')
 trainedfilelist.write(OUTPUT_FILENAME+"\n")

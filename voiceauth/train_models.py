@@ -1,16 +1,17 @@
 import pickle as cPickle
 import numpy as np
+import os
 from scipy.io.wavfile import read
 from sklearn.mixture import GaussianMixture as GMM 
-from speakerfeatures import extract_features
+from voiceauth.speakerfeatures import *
 import warnings
 warnings.filterwarnings("ignore")
 
 def train_model(name):
 
     #path to training data
-    source   = "dataset_train\\" + name + "\\"
-
+    source   = "dataset\\voice\\"
+    source = os.path.join(source, name)
     #path where training speakers will be saved
     dest = "speaker_models\\"
 
@@ -27,7 +28,8 @@ def train_model(name):
         # print (path)
     
         # read the audio
-        sr,audio = read(source + path)
+        WAVE_OUTPUT_FILENAME=os.path.join(source,path)
+        sr,audio = read(WAVE_OUTPUT_FILENAME)
     
         # extract 40 dimensional MFCC & delta MFCC features
         vector = extract_features(audio,sr)

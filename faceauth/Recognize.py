@@ -4,7 +4,7 @@ import sys
 import argparse as arg
 import numpy as np
 import cv2
-from face_detect import *
+from faceauth.face_detect import *
 class Recognizer():
     def __init__(self,cascadePath,train_file,lbph_var):
         self._Face_Cascade = cv2.CascadeClassifier(cascadePath)
@@ -76,7 +76,7 @@ class Recognizer():
                 self.DispID(face*3, self.Get_UserName(0, conf), img) 
             else:
                 self.DispID(face*3, self.Get_UserName(id1, conf), img)   
-        return img
+        return id1
 def Arg_Parse():
     Arg_Par = arg.ArgumentParser()
     Arg_Par.add_argument("-v", "--video",
@@ -85,6 +85,43 @@ def Arg_Parse():
                     help = "Id of the camera")
     arg_list = vars(Arg_Par.parse_args())
     return arg_list
+
+
+
+def recognize_face(videopath,id):
+    skin_detect = Skin_Detect()
+    size1 = (30,30)
+    size2 = (80,110)
+    scale_factor = 3
+    Face_Detect = Face_Detector(skin_detect)
+    face_cascade = 'faceauth\Haar_Cascades\haarcascade_frontalface_default.xml'
+    file_name = 'train.yaml'
+    if not (os.path.isfile(file_name)):
+        raise RuntimeError("%s: not found" % file_name)
+    if not (os.path.isfile(face_cascade)):
+        raise RuntimeError("%s: not found" % face_cascade)
+    # variables for LBPH algorithm
+    radius = 1
+    neighbour = 8
+    grid_x = 8
+    grid_y = 8
+    var = list([radius,neighbour,grid_x,grid_y])
+    model = Recognizer(face_cascade,file_name,var)
+    video = cv2.VideoCapture(videopath)
+    count =0
+    predictedlist = []
+    while count <20:
+        ret, img = video.read()
+        predicted = model.predict(img,Face_Detect,size1,size2)
+        predictedlist.append(predicted)
+        k = cv2.waitKey(10) & 0xff  
+        count+=1
+
+    return max(set(predictedlist), key = predictedlist.count)
+
+
+
+
 if __name__ == "__main__":
     if len(sys.argv) == 1:
         print("Please Provide an argument !!!")
