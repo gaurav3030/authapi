@@ -6,6 +6,7 @@ import json
 from faceauth.Train import *
 from faceauth.Recognize import *
 from voiceauth.register import *
+from voiceauth.login import *
 import cv2 
 @csrf_exempt
 # Create your views here.
@@ -20,25 +21,25 @@ def index(request):
         videopath = "dataset\\"+savedfile
         print(videopath)
         trainface_v(videopath,username)
-    return HttpResponse("Hello, world. You're at the polls index.")
+    return HttpResponse("Registeration done for face")
 @csrf_exempt
 def facelogin(request):
     if request.method == 'POST':
+        location="dataset\\loginspace"
         content = request.POST
-        uploadedfile = request.FILES['face']
-        fs = FileSystemStorage()
-        savedfile = fs.save(uploadedfile.name,uploadedfile)
+        facefile = request.FILES['face']
+        voicefile = request.FILES['voice']
+        fs = FileSystemStorage(location)
+        savedfacefile = fs.save(facefile.name,facefile)
+        savedvoicefile = fs.save(voicefile.name,voicefile)
+        otp =content['otp']
+        
+        facepath = "dataset\\loginspace\\"+savedfacefile
+        voicepath = "dataset\\loginspace\\"+savedvoicefile
 
-        userid =content['id']
-        videopath = "dataset\\"+savedfile
-
-        predicted = recognize_face(videopath,userid)
-
-        if str(predicted) == str(userid):
-            verified = True
-        else:
-            verified =False
-    return HttpResponse(verified)
+        predictedface = recognize_face(facepath)
+        predictedvoicename = recognize_voice(otp,voicepath,predictedface[1])
+    return HttpResponse(predictedvoicename)
 
 
 @csrf_exempt
@@ -65,7 +66,7 @@ def voiceregister(request):
         
 
 
-    return HttpResponse("True")
+    return HttpResponse("registration done for voice")
 
 @csrf_exempt
 def voicelogin(request):

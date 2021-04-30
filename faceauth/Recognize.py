@@ -47,7 +47,7 @@ class Recognizer():
         cv2.rectangle(Image,pt1, pt2, (255,255,255), -1)          
         cv2.rectangle(Image, pt1, pt2, (0,0,255), 1) 
         cv2.putText(Image, NAME ,pt3 , cv2.FONT_HERSHEY_PLAIN, 1.1, (0,0,255))  
-    def Get_UserName(self,ID, conf):
+    def Get_UserName(self,ID):
         #print("[INFO] Confidence: " + "{:.2f} ".format(conf))
         if not ID > 0:
             return " Unknown "
@@ -62,7 +62,7 @@ class Recognizer():
         gray1 = gray.copy()
         #gray = cv2.equalizeHist(gray)
         gray = cv2.resize(gray, (0,0), fx=1/3, fy=1/3)
-        
+        result = []
         faces = self._Face_Cascade.detectMultiScale(gray,scaleFactor=1.05,minNeighbors=4,minSize=(30, 30))
         if len(faces) == 0 :
             img1 = cv2.resize(img, (0,0), fx=1/3, fy=1/3)
@@ -72,11 +72,13 @@ class Recognizer():
             x,y,w,h = face*3
             id1, conf = self._Recognizer.predict(gray1[y:y + h, x:x + w])
                 # Check that the face is recognized
+            result.append(conf)
+            result.append(id1)
             if (conf >100): 
-                self.DispID(face*3, self.Get_UserName(0, conf), img) 
+                self.DispID(face*3, self.Get_UserName(0), img) 
             else:
-                self.DispID(face*3, self.Get_UserName(id1, conf), img)   
-        return id1
+                self.DispID(face*3, self.Get_UserName(id1), img)   
+        return result
 def Arg_Parse():
     Arg_Par = arg.ArgumentParser()
     Arg_Par.add_argument("-v", "--video",
@@ -88,7 +90,7 @@ def Arg_Parse():
 
 
 
-def recognize_face(videopath,id):
+def recognize_face(videopath):
     skin_detect = Skin_Detect()
     size1 = (30,30)
     size2 = (80,110)
@@ -113,11 +115,16 @@ def recognize_face(videopath,id):
     while count <20:
         ret, img = video.read()
         predicted = model.predict(img,Face_Detect,size1,size2)
-        predictedlist.append(predicted)
+        predictedlist.append(predicted[1])
+        
         k = cv2.waitKey(10) & 0xff  
         count+=1
-
-    return max(set(predictedlist), key = predictedlist.count)
+    id =max(set(predictedlist), key = predictedlist.count)
+    name =model.Get_UserName(id)
+    result=[]
+    result.append(id)
+    result.append(name)
+    return result
 
 
 

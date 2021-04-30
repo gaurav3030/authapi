@@ -58,6 +58,7 @@ class Train_Model():
 		self.recognizer.update (faces, np.array (ids))
 		self.recognizer.write (file_name)
 		print ( "\n# {0} people trained successfully.".format (len (np.unique (ids))))
+		
 		#print("\n[INFO] Quitting the program")
 	def Draw_Rect(self,Image, face,color):
 		x,y,w,h = face

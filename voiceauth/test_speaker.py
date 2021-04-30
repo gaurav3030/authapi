@@ -9,20 +9,20 @@ import os
 import pickle as cPickle
 import numpy as np
 from scipy.io.wavfile import read
-from speakerfeatures import extract_features
+from voiceauth.speakerfeatures import extract_features
 import warnings
 warnings.filterwarnings("ignore")
 import time
 
-def check_speaker():
+def check_speaker(voicepath,name):
     #path to training data
-    source   = "dataset_test\\"   
+    # source   = "dataset_test\\"   
 
     modelpath = "speaker_models\\"
 
     test_file = "testing_file.txt"        
 
-    file_paths = open(test_file,'r')
+    # file_paths = open(test_file,'r')
 
 
     gmm_files = [os.path.join(modelpath,fname) for fname in 
@@ -35,30 +35,48 @@ def check_speaker():
 
     # correct = 0
     # incorrect = 0
+    sr,audio = read(voicepath)
+    vector   = extract_features(audio,sr)
 
+    log_likelihood = np.zeros(len(models)) 
+
+    for i in range(len(models)):
+        gmm    = models[i]         #checking with each model one by one
+        scores = np.array(gmm.score(vector))
+        log_likelihood[i] = scores.sum()
+
+    winner = np.argmax(log_likelihood)
+    detected_speaker = speakers[winner]
+    # return detected_speaker
+    # print(detected_speaker)
+    # print(log_likelihood)
+    # print(path.split("_")[1])
+
+    if(name == detected_speaker):
+        return detected_speaker
     # Read the test directory and get the list of test audio files 
-    for path in file_paths:   
-        path = path.strip()   
-        # print (path)
-        sr,audio = read(source + path)
-        vector   = extract_features(audio,sr)
+    # for path in file_paths:   
+    #     path = path.strip()   
+    #     # print (path)
+    #     sr,audio = read(source + path)
+    #     vector   = extract_features(audio,sr)
     
-        log_likelihood = np.zeros(len(models)) 
+    #     log_likelihood = np.zeros(len(models)) 
     
-        for i in range(len(models)):
-            gmm    = models[i]         #checking with each model one by one
-            scores = np.array(gmm.score(vector))
-            log_likelihood[i] = scores.sum()
+    #     for i in range(len(models)):
+    #         gmm    = models[i]         #checking with each model one by one
+    #         scores = np.array(gmm.score(vector))
+    #         log_likelihood[i] = scores.sum()
     
-        winner = np.argmax(log_likelihood)
-        detected_speaker = speakers[winner]
-        # return detected_speaker
-        # print(detected_speaker)
-        # print(log_likelihood)
-        # print(path.split("_")[1])
+    #     winner = np.argmax(log_likelihood)
+    #     detected_speaker = speakers[winner]
+    #     # return detected_speaker
+    #     # print(detected_speaker)
+    #     # print(log_likelihood)
+    #     # print(path.split("_")[1])
 
-        if(path.split("_")[1] == detected_speaker):
-            return detected_speaker
+    #     if(path.split("_")[1] == detected_speaker):
+    #         return detected_speaker
     
 if __name__ == "__main__":
     print ("Speaker testing")
