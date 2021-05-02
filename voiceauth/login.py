@@ -31,12 +31,21 @@ def recognize_voice(otp,voicepath,name):
     if (otp == text):
         speaker = check_speaker(voicepath,name)
         # print(speaker)
+        with open("users_name.txt", "r") as f :                      
+            for line in f:         
+                if line.split(",")[1].rstrip() == speaker[0]:
+                    predictedid = line.split(",")[0].rstrip()
         if not speaker:
             print("Please try again")
         else:
-            print("You have been detected as ", speaker)
+            print("You have been detected as ", speaker[0])
+
+        result = []
+        result.append(predictedid)
+        result.append(speaker[0])
+        result.append(speaker[1])
     
-    return speaker
+    return result
 
 
 

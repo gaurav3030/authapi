@@ -11,6 +11,7 @@ import numpy as np
 from scipy.io.wavfile import read
 from voiceauth.speakerfeatures import extract_features
 import warnings
+import math
 warnings.filterwarnings("ignore")
 import time
 
@@ -43,17 +44,21 @@ def check_speaker(voicepath,name):
     for i in range(len(models)):
         gmm    = models[i]         #checking with each model one by one
         scores = np.array(gmm.score(vector))
+        print(scores)
         log_likelihood[i] = scores.sum()
-
+    log_likelihood /= 120
     winner = np.argmax(log_likelihood)
+    voiceconf = math.exp( log_likelihood[winner] )
+
     detected_speaker = speakers[winner]
     # return detected_speaker
     # print(detected_speaker)
     # print(log_likelihood)
     # print(path.split("_")[1])
-
-    if(name == detected_speaker):
-        return detected_speaker
+    result =[]
+    result.append(detected_speaker)
+    result.append(voiceconf)
+    return result
     # Read the test directory and get the list of test audio files 
     # for path in file_paths:   
     #     path = path.strip()   

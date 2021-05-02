@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse
+from django.http import HttpResponse,JsonResponse
 from django.core.files.storage import FileSystemStorage
 import json
 from faceauth.Train import *
@@ -21,7 +21,7 @@ def index(request):
         videopath = "dataset\\"+savedfile
         print(videopath)
         trainface_v(videopath,username)
-    return HttpResponse("Registeration done for face")
+        return JsonResponse({"message":"Registeration done for face"})
 @csrf_exempt
 def facelogin(request):
     if request.method == 'POST':
@@ -38,8 +38,20 @@ def facelogin(request):
         voicepath = "dataset\\loginspace\\"+savedvoicefile
 
         predictedface = recognize_face(facepath)
-        predictedvoicename = recognize_voice(otp,voicepath,predictedface[1])
-    return HttpResponse(predictedvoicename)
+        predictedvoice = recognize_voice(otp,voicepath,predictedface[1])
+
+    return JsonResponse({
+        "face": {
+            "id":predictedface[0],
+            "name" : predictedface[1],
+            "conf": predictedface[2]
+        },
+        "voice": {
+            "id":predictedvoice[0],
+            "name" : predictedvoice[1],
+            "conf": predictedvoice[2]
+        }
+    })
 
 
 @csrf_exempt
@@ -66,7 +78,7 @@ def voiceregister(request):
         
 
 
-    return HttpResponse("registration done for voice")
+    return JsonResponse({"message":"Registeration done for voice"})
 
 @csrf_exempt
 def voicelogin(request):

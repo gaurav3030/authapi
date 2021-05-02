@@ -112,18 +112,21 @@ def recognize_face(videopath):
     video = cv2.VideoCapture(videopath)
     count =0
     predictedlist = []
+    conflist=[]
     while count <20:
         ret, img = video.read()
         predicted = model.predict(img,Face_Detect,size1,size2)
         predictedlist.append(predicted[1])
-        
+        conflist.append(predicted[0])
         k = cv2.waitKey(10) & 0xff  
         count+=1
+    conf = sum(conflist)/len(conflist)
     id =max(set(predictedlist), key = predictedlist.count)
     name =model.Get_UserName(id)
     result=[]
     result.append(id)
     result.append(name)
+    result.append(conf)
     return result
 
 
