@@ -7,6 +7,9 @@ from faceauth.Train import *
 from faceauth.Recognize import *
 from voiceauth.register import *
 from voiceauth.login import *
+from moviepy.editor import *
+import os
+
 import cv2 
 @csrf_exempt
 # Create your views here.
@@ -28,18 +31,23 @@ def facelogin(request):
         location="dataset\\loginspace"
         content = request.POST
         facefile = request.FILES['face']
-        voicefile = request.FILES['voice']
+        # voicefile = request.FILES['voice']
         fs = FileSystemStorage(location)
         savedfacefile = fs.save(facefile.name,facefile)
-        savedvoicefile = fs.save(voicefile.name,voicefile)
+        
+        audioclip = AudioFileClip(location+"\\"+facefile.name)
+
+        audioclip.write_audiofile(location + "\\audio_log.wav")
+        #savedvoicefile = fs.save(voicefile.name,voicefile)
         otp =content['otp']
         
         facepath = "dataset\\loginspace\\"+savedfacefile
-        voicepath = "dataset\\loginspace\\"+savedvoicefile
+        voicepath = "dataset\\loginspace\\"+"audio_log.wav"
 
         predictedface = recognize_face(facepath)
         predictedvoice = recognize_voice(otp,voicepath,predictedface[1])
-
+        os.remove(facepath)
+        os.remove(voicepath)
     return JsonResponse({
         "face": {
             "id":predictedface[0],
