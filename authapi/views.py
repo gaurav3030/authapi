@@ -48,18 +48,18 @@ def facelogin(request):
         predictedvoice = recognize_voice(otp,voicepath,predictedface[1])
         os.remove(facepath)
         os.remove(voicepath)
-    return JsonResponse({
-        "face": {
-            "id":predictedface[0],
-            "name" : predictedface[1],
-            "conf": predictedface[2]
-        },
-        "voice": {
-            "id":predictedvoice[0],
+    if predictedface[1]==predictedvoice[1]:
+        return JsonResponse({
             "name" : predictedvoice[1],
-            "conf": predictedvoice[2]
-        }
-    })
+            "faceconf": predictedface[2],
+            "voiceconf": predictedvoice[2]
+            
+        })
+    else:
+        return JsonResponse({
+            "msg": "Face and voice not matched"
+        })
+
 
 
 @csrf_exempt
